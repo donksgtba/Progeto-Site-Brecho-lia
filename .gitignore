@@ -1,0 +1,6 @@
+node_modules/
+lia_brecho.json
+lia_brecho.db
+.DS_Store
+npm-debug.log*
+.env

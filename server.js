@@ -39,6 +39,12 @@ function getNextId(arr) {
     const hash = bcrypt.hashSync('admin123', 10);
     users.push({ id: getNextId(users), email: 'admin@liabrecho.com', password_hash: hash, name: 'Admin' });
   }
+  // Admin alternativo solicitado: email 'admin' e senha 'admin'
+  const adminSimple = users.find(u => u.email === 'admin');
+  if (!adminSimple) {
+    const hash2 = bcrypt.hashSync('admin', 10);
+    users.push({ id: getNextId(users), email: 'admin', password_hash: hash2, name: 'Admin' });
+  }
   if (categories.length === 0) {
     ['Calças', 'Blusas', 'Vestidos', 'Sapatos', 'Acessórios'].forEach(name => {
       categories.push({ id: getNextId(categories), name });
