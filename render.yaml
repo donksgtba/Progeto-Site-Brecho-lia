@@ -1,10 +1,10 @@
 services:
-  - type: web
+  - type: static
     name: lia-brecho
     env: node
     plan: free
     buildCommand: npm install
     startCommand: npm start
     envVars:
-      - key: OWNER_PASSWORD
+      - key: admin123
         sync: false
