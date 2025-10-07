@@ -10,11 +10,40 @@
   <div class="container">
     <header class="header">
       <div class="brand">LIA BRECHÓ</div>
+      <div style="position:absolute; right:24px; top:24px;">
+        <button id="btnOpenLogin" class="btn">Entrar</button>
+      </div>
     </header>
 
     <nav id="nav" class="nav"></nav>
 
     <section id="grid" class="grid"></section>
+  </div>
+
+  <!-- Modal de Login -->
+  <div id="loginModal" class="modal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 style="margin:0">Login do Administrador</h3>
+        <button class="modal-close" id="btnCloseLogin" aria-label="Fechar">×</button>
+      </div>
+      <div class="form-row">
+        <label>
+          E-mail ou usuário
+          <input id="loginEmail" placeholder="ex.: liah" />
+        </label>
+      </div>
+      <div class="form-row">
+        <label>
+          Senha
+          <input id="loginPassword" type="password" placeholder="senha" />
+        </label>
+      </div>
+      <div class="form-actions">
+        <button class="btn" id="btnDoLogin">Entrar</button>
+      </div>
+      <div class="helper">Dica: liah / liah123</div>
+    </div>
   </div>
 
   <script src="/app.js" type="module"></script>

@@ -37,6 +37,13 @@ html,body{margin:0;padding:0;font-family:'Georgia', 'Times New Roman', serif;bac
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:1000}
 .overlay-card{background:rgba(255,255,255,0.08);border:2px solid var(--cream);border-radius:20px;padding:22px;max-width:560px;text-align:center;color:var(--text)}
 
+/* Modal genérico */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:1100}
+.modal.open{display:flex}
+.modal-card{background:rgba(255,255,255,0.08);border:2px solid var(--cream);border-radius:20px;padding:22px;min-width:320px;max-width:520px;color:var(--text)}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.modal-close{background:transparent;border:none;color:var(--text);font-size:22px;cursor:pointer}
+
 /* Responsividade */
 @media (max-width: 900px){
   .container{padding:18px}
