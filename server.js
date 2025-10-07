@@ -21,7 +21,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 const adapter = new JSONFileSync(path.join(__dirname, 'lia_brecho.json'));
 const db = new LowSync(adapter, { users: [], categories: [], products: [], settings: {} });
 db.read();
-db.data ||= { users: [], categories: [], products: [], settings: {} };
+// Garante estrutura mesmo se o arquivo existir sem todas as chaves
+db.data ||= {};
+db.data.users ||= [];
+db.data.categories ||= [];
+db.data.products ||= [];
+db.data.settings ||= {};
 
 function getNextId(arr) {
   const max = arr.reduce((m, i) => Math.max(m, Number(i.id)||0), 0);
