@@ -22,8 +22,18 @@ async function save(){
   const size = document.getElementById('size').value.trim();
   const color = document.getElementById('color').value.trim();
   const price = parseFloat(document.getElementById('price').value||'0');
-  const image_url = document.getElementById('image').value.trim();
+  let image_url = document.getElementById('image').value.trim();
   if(!name || !category_id || !price){ alert('Preencha nome, categoria e preço'); return; }
+  // Se um arquivo for escolhido, faz upload primeiro
+  const fileInput = document.getElementById('imageFile');
+  if (fileInput && fileInput.files && fileInput.files[0]) {
+    const fd = new FormData();
+    fd.append('image', fileInput.files[0]);
+    const resUp = await fetch('/api/upload', { method:'POST', headers: { 'Authorization': `Bearer ${localStorage.getItem('token')||''}` }, body: fd });
+    if(!resUp.ok){ const e = await resUp.json().catch(()=>({})); alert(e.error||'Falha ao enviar imagem'); return; }
+    const dataUp = await resUp.json();
+    image_url = dataUp.url || image_url;
+  }
   const res = await fetch('/api/products', { method:'POST', headers: headers(), body: JSON.stringify({ name, description, category_id, size, color, price_cents: Math.round(price*100), image_url }) });
   if(!res.ok){ const e = await res.json(); alert(e.error||'Erro'); return; }
   await loadProducts();
@@ -33,6 +43,7 @@ async function save(){
   document.getElementById('color').value='';
   document.getElementById('price').value='';
   document.getElementById('image').value='';
+  if (fileInput) fileInput.value='';
 }
 
 document.getElementById('btnSave').addEventListener('click', save);
