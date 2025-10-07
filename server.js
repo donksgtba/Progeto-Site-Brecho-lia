@@ -210,5 +210,10 @@ app.get('/owner', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'owner.html'));
 });
 
+// Home explícita
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`LIA BRECHÓ rodando em http://localhost:${PORT}`));
