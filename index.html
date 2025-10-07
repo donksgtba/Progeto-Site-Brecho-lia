@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LIA BRECHÓ</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="brand">LIA BRECHÓ</div>
+    </header>
+
+    <nav id="nav" class="nav"></nav>
+
+    <section id="grid" class="grid"></section>
+  </div>
+
+  <script src="/app.js" type="module"></script>
+  <script type="module">
+    import { loadSettings, ensureWhatsButton, maybeBlockByStatus } from './common.js';
+    loadSettings().then(s => { ensureWhatsButton(s.support_whatsapp); maybeBlockByStatus(s.status, s.support_whatsapp); });
+  </script>
+</body>
+</html>
