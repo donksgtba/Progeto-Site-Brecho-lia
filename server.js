@@ -6,6 +6,8 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { LowSync } from 'lowdb';
 import { JSONFileSync } from 'lowdb/node';
+import multer from 'multer';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,6 +18,10 @@ app.use(express.json());
 
 // Static (servindo da raiz do projeto, pois no GitHub os arquivos estão na raiz)
 app.use(express.static(__dirname));
+// Pasta de uploads
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
+app.use('/uploads', express.static(uploadsDir));
 
 // DB init (LowDB - JSON)
 const adapter = new JSONFileSync(path.join(__dirname, 'lia_brecho.json'));
@@ -49,6 +55,12 @@ function getNextId(arr) {
   if (!adminSimple) {
     const hash2 = bcrypt.hashSync('admin', 10);
     users.push({ id: getNextId(users), email: 'admin', password_hash: hash2, name: 'Admin' });
+  }
+  // Usuária da cliente: login 'liah' / senha 'liah123'
+  const userLiah = users.find(u => u.email === 'liah');
+  if (!userLiah) {
+    const hash3 = bcrypt.hashSync('liah123', 10);
+    users.push({ id: getNextId(users), email: 'liah', password_hash: hash3, name: 'Lia Cliente' });
   }
   if (categories.length === 0) {
     ['Calças', 'Blusas', 'Vestidos', 'Sapatos', 'Acessórios'].forEach(name => {
