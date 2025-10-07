@@ -6,6 +6,8 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { LowSync } from 'lowdb';
 import { JSONFileSync } from 'lowdb/node';
+import multer from 'multer';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,14 +16,23 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Static
-app.use(express.static(path.join(__dirname, 'public')));
+// Static (servindo da raiz do projeto, pois no GitHub os arquivos estão na raiz)
+app.use(express.static(__dirname));
+// Pasta de uploads
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
+app.use('/uploads', express.static(uploadsDir));
 
 // DB init (LowDB - JSON)
 const adapter = new JSONFileSync(path.join(__dirname, 'lia_brecho.json'));
 const db = new LowSync(adapter, { users: [], categories: [], products: [], settings: {} });
 db.read();
-db.data ||= { users: [], categories: [], products: [], settings: {} };
+// Garante estrutura mesmo se o arquivo existir sem todas as chaves
+db.data ||= {};
+db.data.users ||= [];
+db.data.categories ||= [];
+db.data.products ||= [];
+db.data.settings ||= {};
 
 function getNextId(arr) {
   const max = arr.reduce((m, i) => Math.max(m, Number(i.id)||0), 0);
@@ -38,6 +49,18 @@ function getNextId(arr) {
   if (!admin) {
     const hash = bcrypt.hashSync('admin123', 10);
     users.push({ id: getNextId(users), email: 'admin@liabrecho.com', password_hash: hash, name: 'Admin' });
+  }
+  // Admin alternativo solicitado: email 'admin' e senha 'admin'
+  const adminSimple = users.find(u => u.email === 'admin');
+  if (!adminSimple) {
+    const hash2 = bcrypt.hashSync('admin', 10);
+    users.push({ id: getNextId(users), email: 'admin', password_hash: hash2, name: 'Admin' });
+  }
+  // Usuária da cliente: login 'liah' / senha 'liah123'
+  const userLiah = users.find(u => u.email === 'liah');
+  if (!userLiah) {
+    const hash3 = bcrypt.hashSync('liah123', 10);
+    users.push({ id: getNextId(users), email: 'liah', password_hash: hash3, name: 'Lia Cliente' });
   }
   if (categories.length === 0) {
     ['Calças', 'Blusas', 'Vestidos', 'Sapatos', 'Acessórios'].forEach(name => {
@@ -189,14 +212,19 @@ app.delete('/api/products/:id', authMiddleware, (req, res) => {
 
 // Fallback to SPA-like pages
 app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+  res.sendFile(path.join(__dirname, 'admin.html'));
 });
 app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+  res.sendFile(path.join(__dirname, 'login.html'));
 });
 
 app.get('/owner', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'owner.html'));
+  res.sendFile(path.join(__dirname, 'owner.html'));
+});
+
+// Home explícita
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 const PORT = process.env.PORT || 3000;
