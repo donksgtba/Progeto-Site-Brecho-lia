@@ -210,6 +210,23 @@ app.delete('/api/products/:id', authMiddleware, (req, res) => {
   res.json({ success: true, removed: before - db.data.products.length });
 });
 
+// Upload de imagens (autenticado)
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadsDir),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname) || '.jpg';
+    const name = `img_${Date.now()}${ext}`;
+    cb(null, name);
+  }
+});
+const upload = multer({ storage });
+
+app.post('/api/upload', authMiddleware, upload.single('image'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'Arquivo não enviado' });
+  const url = `/uploads/${req.file.filename}`;
+  res.json({ url });
+});
+
 // Fallback to SPA-like pages
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin.html'));
