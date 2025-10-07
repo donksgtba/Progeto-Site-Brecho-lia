@@ -1,11 +1,11 @@
 services:
-  - type: web            # deve ser 'web'
+  - type: web            
     name: site-brecho
-    env: static          # mantém 'static'
+    env: static          
     branch: main
-    buildCommand: ""     # nenhum build se for HTML/CSS/JS puro
-    startCommand: ""     # nenhum start
-    staticPublishPath: public # onde está o index.html neste projeto
+    buildCommand: ""     
+    startCommand: ""     
+    staticPublishPath: public 
     routes:
       - type: rewrite
         source: /admin
