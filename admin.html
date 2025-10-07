@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin · LIA BRECHÓ</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="header-small">LIA BRECHÓ</div>
+
+    <div class="notice" id="authNotice"></div>
+
+    <div class="form-wrap">
+      <h3 style="margin-top:0">Cadastrar produto</h3>
+      <div class="form-row">
+        <label>
+          Nome
+          <input id="name" placeholder="Nome" />
+        </label>
+      </div>
+      <div class="form-row">
+        <label style="flex:2">
+          Descrição
+          <textarea id="description" rows="3" placeholder="Descrição"></textarea>
+        </label>
+      </div>
+      <div class="form-row">
+        <label>
+          Categoria
+          <select id="category"></select>
+        </label>
+        <label>
+          Tamanho
+          <input id="size" placeholder="Ex: P, M, 38" />
+        </label>
+      </div>
+      <div class="form-row">
+        <label>
+          Cor
+          <input id="color" placeholder="Cor" />
+        </label>
+        <label>
+          Preço (R$)
+          <input id="price" type="number" min="0" step="0.01" />
+        </label>
+      </div>
+      <div class="form-row">
+        <label>
+          URL da imagem (opcional)
+          <input id="image" placeholder="https://..." />
+        </label>
+      </div>
+      <div class="form-actions">
+        <button class="btn" id="btnSave">Cadastrar</button>
+      </div>
+    </div>
+
+    <h3 style="margin-top:24px">Produtos cadastrados</h3>
+    <table class="table" id="table"></table>
+  </div>
+
+  <script src="/admin.js" type="module"></script>
+  <script type="module">
+    import { loadSettings, ensureWhatsButton } from './common.js';
+    loadSettings().then(s => ensureWhatsButton(s.support_whatsapp));
+  </script>
+</body>
+</html>

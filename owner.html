@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Proprietário · LIA BRECHÓ</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="header-small">LIA BRECHÓ</div>
+
+    <div id="loginBox" class="form-wrap">
+      <h3>Login do Proprietário</h3>
+      <div class="form-row">
+        <label>
+          Senha do proprietário
+          <input id="ownerPass" type="password" placeholder="senha" />
+        </label>
+      </div>
+      <div class="form-actions">
+        <button class="btn" id="btnOwnerLogin">Entrar</button>
+      </div>
+    </div>
+
+    <div id="panel" class="form-wrap hidden">
+      <h3>Painel do Proprietário</h3>
+      <div class="form-row">
+        <label>
+          Status do site
+          <select id="status">
+            <option value="ativo">Ativo</option>
+            <option value="trial">Trial</option>
+            <option value="inadimplente">Inadimplente (bloquear)</option>
+            <option value="vitalicio">Vitalício</option>
+          </select>
+        </label>
+        <label>
+          WhatsApp de suporte (somente números, com DDI)
+          <input id="whats" placeholder="5564993081992" />
+        </label>
+      </div>
+      <div class="form-row">
+        <label>
+          Alterar senha do proprietário (opcional)
+          <input id="newOwnerPass" type="password" placeholder="nova senha" />
+        </label>
+      </div>
+      <div class="form-actions">
+        <button class="btn" id="btnSaveSettings">Salvar configurações</button>
+      </div>
+      <div class="helper">Dica: compartilhe o link público do site com o cliente. Em caso de inadimplência, mude para "Inadimplente" para bloquear a vitrine.</div>
+    </div>
+  </div>
+
+  <script src="/owner.js" type="module"></script>
+  <script type="module">
+    import { loadSettings, ensureWhatsButton } from './common.js';
+    loadSettings().then(s => ensureWhatsButton(s.support_whatsapp));
+  </script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login · LIA BRECHÓ</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="header-small">LIA BRECHÓ</div>
+
+    <div class="form-wrap">
+      <div class="form-row">
+        <label>
+          E-mail
+          <input id="email" type="email" placeholder="email" />
+        </label>
+      </div>
+      <div class="form-row">
+        <label>
+          Senha
+          <input id="password" type="password" placeholder="senha" />
+        </label>
+      </div>
+      <div class="form-actions">
+        <button class="btn" id="btnLogin">Login</button>
+      </div>
+      <div class="helper">Esqueceu sua senha?</div>
+    </div>
+  </div>
+
+  <script src="/login.js" type="module"></script>
+  <script type="module">
+    import { loadSettings, ensureWhatsButton } from './common.js';
+    loadSettings().then(s => ensureWhatsButton(s.support_whatsapp));
+  </script>
+</body>
+</html>
