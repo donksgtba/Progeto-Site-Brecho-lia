@@ -14,8 +14,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Static
-app.use(express.static(path.join(__dirname, 'public')));
+// Static (servindo da raiz do projeto, pois no GitHub os arquivos estão na raiz)
+app.use(express.static(__dirname));
 
 // DB init (LowDB - JSON)
 const adapter = new JSONFileSync(path.join(__dirname, 'lia_brecho.json'));
@@ -200,19 +200,19 @@ app.delete('/api/products/:id', authMiddleware, (req, res) => {
 
 // Fallback to SPA-like pages
 app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+  res.sendFile(path.join(__dirname, 'admin.html'));
 });
 app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+  res.sendFile(path.join(__dirname, 'login.html'));
 });
 
 app.get('/owner', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'owner.html'));
+  res.sendFile(path.join(__dirname, 'owner.html'));
 });
 
 // Home explícita
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 const PORT = process.env.PORT || 3000;
