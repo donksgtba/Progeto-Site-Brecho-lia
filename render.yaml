@@ -1,18 +1,11 @@
 services:
-  - type: web            
-    name: site-brecho
-    env: static          
+  - type: web
+    name: lia-brecho
+    env: node
+    plan: free
     branch: main
-    buildCommand: ""     
-    startCommand: ""     
-    staticPublishPath: public 
-    routes:
-      - type: rewrite
-        source: /admin
-        destination: /admin.html
-      - type: rewrite
-        source: /login
-        destination: /login.html
-      - type: rewrite
-        source: /owner
-        destination: /owner.html
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: OWNER_PASSWORD
+        sync: false
