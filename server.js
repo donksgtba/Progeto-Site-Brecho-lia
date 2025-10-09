@@ -19,13 +19,15 @@ app.use(express.json());
 
 // Static (servindo da raiz do projeto, pois no GitHub os arquivos estão na raiz)
 app.use(express.static(__dirname));
+// Diretório de dados persistentes (para Fly.io volume)
+const DATA_DIR = process.env.DATA_DIR || __dirname;
 // Pasta de uploads
-const uploadsDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
+const uploadsDir = path.join(DATA_DIR, 'uploads');
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 app.use('/uploads', express.static(uploadsDir));
 
 // DB init (LowDB - JSON) - mantido apenas para settings locais
-const adapter = new JSONFileSync(path.join(__dirname, 'lia_brecho.json'));
+const adapter = new JSONFileSync(path.join(DATA_DIR, 'lia_brecho.json'));
 const db = new LowSync(adapter, { users: [], categories: [], products: [], settings: {} });
 db.read();
 db.data ||= {};
