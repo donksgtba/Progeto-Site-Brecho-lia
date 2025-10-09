@@ -31,3 +31,11 @@ kill_timeout = 5
 [[mounts]]
   source = "lia_data"
   destination = "/data"
+
+[[services.http_checks]]
+  interval = "10s"
+  timeout = "2s"
+  method = "GET"
+  path = "/api/health/db"
+  protocol = "http"
+  tls_skip_verify = false
