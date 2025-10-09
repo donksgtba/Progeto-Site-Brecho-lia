@@ -8,6 +8,7 @@ import { LowSync } from 'lowdb';
 import { JSONFileSync } from 'lowdb/node';
 import multer from 'multer';
 import fs from 'fs';
+import sql from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -23,15 +24,11 @@ const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
 app.use('/uploads', express.static(uploadsDir));
 
-// DB init (LowDB - JSON)
+// DB init (LowDB - JSON) - mantido apenas para settings locais
 const adapter = new JSONFileSync(path.join(__dirname, 'lia_brecho.json'));
 const db = new LowSync(adapter, { users: [], categories: [], products: [], settings: {} });
 db.read();
-// Garante estrutura mesmo se o arquivo existir sem todas as chaves
 db.data ||= {};
-db.data.users ||= [];
-db.data.categories ||= [];
-db.data.products ||= [];
 db.data.settings ||= {};
 
 function getNextId(arr) {
@@ -39,48 +36,43 @@ function getNextId(arr) {
   return max + 1;
 }
 
-// Seed admin and basic categories if empty
-(function seed() {
-  const { users, categories, products } = db.data;
-  db.data.settings.status ||= 'ativo'; // ativo | trial | inadimplente | vitalicio
-  db.data.settings.support_whatsapp ||= '5564993081992'; // E.164 sem +
-  db.data.settings.owner_password ||= process.env.OWNER_PASSWORD || 'owner123';
-  const admin = users.find(u => u.email === 'admin@liabrecho.com');
-  if (!admin) {
+// Ensure Postgres schema and minimal seed
+async function ensurePg() {
+  // Create tables if not exists
+  await sql`create table if not exists users (id serial primary key, email text unique not null, password_hash text not null, name text not null)`;
+  await sql`create table if not exists categories (id serial primary key, name text unique not null)`;
+  await sql`create table if not exists products (id serial primary key, name text not null, description text default '', category_id int not null references categories(id) on delete cascade, size text default '', color text default '', price_cents int not null, image_url text default '', created_at timestamptz default now())`;
+  // Seed users
+  const admin = await sql`select id from users where email = 'admin@liabrecho.com'`;
+  if (admin.count === 0) {
     const hash = bcrypt.hashSync('admin123', 10);
-    users.push({ id: getNextId(users), email: 'admin@liabrecho.com', password_hash: hash, name: 'Admin' });
+    await sql`insert into users (email, password_hash, name) values ('admin@liabrecho.com', ${hash}, 'Admin')`;
   }
-  // Admin alternativo solicitado: email 'admin' e senha 'admin'
-  const adminSimple = users.find(u => u.email === 'admin');
-  if (!adminSimple) {
+  const adminSimple = await sql`select id from users where email = 'admin'`;
+  if (adminSimple.count === 0) {
     const hash2 = bcrypt.hashSync('admin', 10);
-    users.push({ id: getNextId(users), email: 'admin', password_hash: hash2, name: 'Admin' });
+    await sql`insert into users (email, password_hash, name) values ('admin', ${hash2}, 'Admin')`;
   }
-  // Usuária da cliente: login 'liah' / senha 'liah123'
-  const userLiah = users.find(u => u.email === 'liah');
-  if (!userLiah) {
+  const liah = await sql`select id from users where email = 'liah'`;
+  if (liah.count === 0) {
     const hash3 = bcrypt.hashSync('liah123', 10);
-    users.push({ id: getNextId(users), email: 'liah', password_hash: hash3, name: 'Lia Cliente' });
+    await sql`insert into users (email, password_hash, name) values ('liah', ${hash3}, 'Lia Cliente')`;
   }
-  if (categories.length === 0) {
-    ['Calças', 'Blusas', 'Vestidos', 'Sapatos', 'Acessórios'].forEach(name => {
-      categories.push({ id: getNextId(categories), name });
-    });
+  // Seed categories
+  const catCount = await sql`select count(*)::int as c from categories`;
+  if ((catCount[0]?.c ?? 0) === 0) {
+    for (const name of ['Calças','Blusas','Vestidos','Sapatos','Acessórios']) {
+      await sql`insert into categories (name) values (${name}) on conflict (name) do nothing`;
+    }
   }
-  if (products.length === 0) {
-    const byName = n => categories.find(c => c.name === n)?.id;
-    const items = [
-      { name: 'Calça Bege', description: 'Tamanho M', category_id: byName('Calças'), size: 'M', color: 'Bege', price_cents: 5000, image_url: '' },
-      { name: 'Calça Jeans', description: 'Tamanho G', category_id: byName('Calças'), size: 'G', color: 'Azul', price_cents: 6000, image_url: '' },
-      { name: 'Blusa Rosa', description: 'Tamanho P', category_id: byName('Blusas'), size: 'P', color: 'Rosa', price_cents: 3000, image_url: '' },
-      { name: 'Vestido Creme', description: 'Tamanho M', category_id: byName('Vestidos'), size: 'M', color: 'Creme', price_cents: 8000, image_url: '' },
-      { name: 'Sapatilha Marrom', description: 'Sapatos', category_id: byName('Sapatos'), size: '37', color: 'Marrom', price_cents: 9000, image_url: '' },
-      { name: 'Bolsa Palha', description: 'Acessórios', category_id: byName('Acessórios'), size: 'Único', color: 'Palha', price_cents: 7000, image_url: '' },
-    ];
-    items.forEach(it => products.push({ id: getNextId(products), created_at: new Date().toISOString(), ...it }));
-  }
+  // Persist local settings (still in JSON)
+  db.data.settings.status ||= 'ativo';
+  db.data.settings.support_whatsapp ||= '5564993081992';
+  db.data.settings.owner_password ||= process.env.OWNER_PASSWORD || 'owner123';
   db.write();
-})();
+}
+
+await ensurePg();
 
 const JWT_SECRET = 'lia-brecho-secret';
 const OWNER_SECRET = 'lia-brecho-owner';
@@ -112,10 +104,11 @@ function ownerAuth(req, res, next){
 }
 
 // Auth
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'Dados inválidos' });
-  const user = db.data.users.find(u => u.email === email);
+  const rows = await sql`select id, email, password_hash, name from users where email = ${email}`;
+  const user = rows[0];
   if (!user) return res.status(401).json({ error: 'Credenciais inválidas' });
   const ok = bcrypt.compareSync(password, user.password_hash);
   if (!ok) return res.status(401).json({ error: 'Credenciais inválidas' });
@@ -148,66 +141,67 @@ app.put('/api/settings', ownerAuth, (req, res) => {
 });
 
 // Categories
-app.get('/api/categories', (req, res) => {
-  const rows = [...db.data.categories].sort((a,b)=> a.name.localeCompare(b.name));
-  res.json(rows);
+app.get('/api/categories', async (req, res) => {
+  try {
+    const rows = await sql/*sql*/`select id, name from categories order by name asc`;
+    res.json(rows);
+  } catch (e) {
+    console.error('categories error', e);
+    res.status(500).json({ error: 'Erro ao listar categorias' });
+  }
 });
 
-app.post('/api/categories', authMiddleware, (req, res) => {
+app.post('/api/categories', authMiddleware, async (req, res) => {
   const { name } = req.body;
   if (!name) return res.status(400).json({ error: 'Nome é obrigatório' });
-  if (db.data.categories.find(c => c.name.toLowerCase() === name.toLowerCase())) {
-    return res.status(400).json({ error: 'Categoria já existe' });
+  try {
+    const [cat] = await sql`insert into categories (name) values (${name}) returning id, name`;
+    res.json(cat);
+  } catch (e) {
+    if (String(e.message||'').includes('duplicate') || String(e.message||'').includes('unique')) {
+      return res.status(400).json({ error: 'Categoria já existe' });
+    }
+    console.error('create category error', e);
+    res.status(500).json({ error: 'Erro ao criar categoria' });
   }
-  const cat = { id: getNextId(db.data.categories), name };
-  db.data.categories.push(cat);
-  db.write();
-  res.json(cat);
 });
 
 // Products
-app.get('/api/products', (req, res) => {
+app.get('/api/products', async (req, res) => {
   const { categoryId } = req.query;
-  let rows = db.data.products;
-  if (categoryId) rows = rows.filter(p => Number(p.category_id) === Number(categoryId));
-  rows = rows
-    .slice()
-    .sort((a,b)=> Number(b.id)-Number(a.id))
-    .map(p => ({ ...p, category_name: db.data.categories.find(c => c.id === p.category_id)?.name }));
+  const rows = await sql`select p.*, c.name as category_name from products p join categories c on c.id = p.category_id where ${categoryId ? sql`p.category_id = ${categoryId}` : sql`true`} order by p.id desc`;
   res.json(rows);
 });
 
-app.post('/api/products', authMiddleware, (req, res) => {
+app.post('/api/products', authMiddleware, async (req, res) => {
   const { name, description, category_id, size, color, price_cents, image_url } = req.body;
   if (!name || !category_id || !price_cents) return res.status(400).json({ error: 'Campos obrigatórios ausentes' });
-  const product = { id: getNextId(db.data.products), name, description: description||'', category_id: Number(category_id), size: size||'', color: color||'', price_cents: Number(price_cents), image_url: image_url||'', created_at: new Date().toISOString() };
-  db.data.products.push(product);
-  db.write();
-  res.json(product);
-});
-
-app.put('/api/products/:id', authMiddleware, (req, res) => {
-  const id = Number(req.params.id);
-  const p = db.data.products.find(x => x.id === id);
-  if (!p) return res.status(404).json({ error: 'Produto não encontrado' });
-  const { name, description, category_id, size, color, price_cents, image_url } = req.body;
-  p.name = name ?? p.name;
-  p.description = description ?? p.description;
-  p.category_id = Number(category_id ?? p.category_id);
-  p.size = size ?? p.size;
-  p.color = color ?? p.color;
-  p.price_cents = Number(price_cents ?? p.price_cents);
-  p.image_url = image_url ?? p.image_url;
-  db.write();
+  const [p] = await sql`insert into products (name, description, category_id, size, color, price_cents, image_url) values (${name}, ${description||''}, ${category_id}, ${size||''}, ${color||''}, ${price_cents}, ${image_url||''}) returning *`;
   res.json(p);
 });
 
-app.delete('/api/products/:id', authMiddleware, (req, res) => {
+app.put('/api/products/:id', authMiddleware, async (req, res) => {
   const id = Number(req.params.id);
-  const before = db.data.products.length;
-  db.data.products = db.data.products.filter(p => p.id !== id);
-  db.write();
-  res.json({ success: true, removed: before - db.data.products.length });
+  const { name, description, category_id, size, color, price_cents, image_url } = req.body;
+  const [p] = await sql`update products set name = coalesce(${name}, name), description = coalesce(${description}, description), category_id = coalesce(${category_id}, category_id), size = coalesce(${size}, size), color = coalesce(${color}, color), price_cents = coalesce(${price_cents}, price_cents), image_url = coalesce(${image_url}, image_url) where id = ${id} returning *`;
+  if (!p) return res.status(404).json({ error: 'Produto não encontrado' });
+  res.json(p);
+});
+
+app.delete('/api/products/:id', authMiddleware, async (req, res) => {
+  const id = Number(req.params.id);
+  const result = await sql`delete from products where id = ${id}`;
+  res.json({ success: true });
+});
+
+// Healthcheck do banco
+app.get('/api/health/db', async (req, res) => {
+  try {
+    const [r] = await sql/*sql*/`select now() as now`;
+    res.json({ ok: true, now: r.now });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: String(e.message||e) });
+  }
 });
 
 // Upload de imagens (autenticado)
