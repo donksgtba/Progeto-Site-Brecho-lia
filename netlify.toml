@@ -1,0 +1,26 @@
+[build]
+  publish = "public"
+
+# Proxy API calls from the static site to your backend
+# TODO: set the correct backend origin (e.g., https://lia-brecho-backend.onrender.com)
+[[redirects]]
+  from = "/api/*"
+  to = "https://YOUR-BACKEND-ORIGIN/api/:splat"
+  status = 200
+  force = true
+
+# Pretty paths to static HTML files
+[[redirects]]
+  from = "/admin"
+  to = "/admin.html"
+  status = 200
+
+[[redirects]]
+  from = "/login"
+  to = "/login.html"
+  status = 200
+
+[[redirects]]
+  from = "/owner"
+  to = "/owner.html"
+  status = 200
